@@ -6,8 +6,6 @@
 
 This is a CRUD (Create, Read, Update, Delete) application developed using backend technologies.
 
----
-
 ## Features
 - **Backend**: Java 21 with Spring Boot for scalable and efficient server-side logic.
 - **Database**: PostgreSQL managed in Docker containers for persistence and high availability.
