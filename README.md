@@ -1,7 +1,5 @@
 # CRUD Application
 
----
-
 ## Overview
 > ***Note:*** This project is a work in progress, aimed at enhancing backend development skills 
 > and showcasing practical implementations of modern technologies.
