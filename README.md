@@ -12,7 +12,7 @@ This is a CRUD (Create, Read, Update, Delete) application developed using backen
 - **ORM**: Hibernate for database interaction.
 - **Utilities**:
     - **Lombok** for reducing boilerplate code.
-    - **Swagger** for API documentation.
+    - **Springdoc** for API documentation.
     - **Postman** for API testing.
 - **Testing**:
     - JUnit and Mockito for unit and integration testing.
