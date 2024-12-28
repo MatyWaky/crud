@@ -3,6 +3,7 @@ package io.github.matywaky.crud.service;
 import io.github.matywaky.crud.dto.UserDto;
 import io.github.matywaky.crud.entity.User;
 import io.github.matywaky.crud.exception.EntityNotFoundException;
+import io.github.matywaky.crud.exception.InvalidInputException;
 import io.github.matywaky.crud.mapper.UserMapper;
 import io.github.matywaky.crud.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -54,7 +55,11 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(id);
     }
 
-    private User checkIfUserWithIdExistsOrThrow(Long id) {
+    protected User checkIfUserWithIdExistsOrThrow(Long id) {
+        if (id == null || id <= 0) {
+            throw new InvalidInputException(id == null ? "null" : id.toString());
+        }
+
         return userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(User.class.getSimpleName(), id));
     }
