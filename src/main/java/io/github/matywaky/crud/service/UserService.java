@@ -4,6 +4,9 @@ import io.github.matywaky.crud.dto.UserDto;
 
 import java.util.List;
 
+/**
+ * UserService interface providing CRUD operations for User entities
+ */
 public interface UserService {
     UserDto createUser(UserDto userDto);
     UserDto getUserById(Long id);
