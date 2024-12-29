@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class InvalidInputException extends RuntimeException {
 
     private static final Logger LOG = LoggerFactory.getLogger(InvalidInputException.class);
-
     /**
      * Constructor for creating an {@link InvalidInputException}.
      *

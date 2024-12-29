@@ -4,75 +4,188 @@ import io.github.matywaky.crud.dto.UserDto;
 import io.github.matywaky.crud.entity.User;
 import io.github.matywaky.crud.exception.EntityNotFoundException;
 import io.github.matywaky.crud.exception.InvalidInputException;
-import io.github.matywaky.crud.mapper.UserMapper;
+import io.github.matywaky.crud.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-/**
- * Unit tests for the {@link UserService} class.
- */
-@SpringBootTest
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
-    /**
-     * The {@link UserService} bean to be tested. It is automatically injected by Spring.
-     */
-    @Autowired
-    private UserService userService;
+    @Mock
+    private UserRepository userRepository;
 
-    /**
-     * Test the {@link UserService#getUserById(Long)} method with a valid user ID.
-     * This test verifies that when a valid user ID is provided, the service correctly retrieves the
-     * corresponding user data and maps it to a {@link UserDto} object. The expected values of the user's
-     * first name, last name, email, and password are asserted.
-     */
-    @Test
-    public void testGetUserById_ValidId() {
-        UserDto userDto = userService.getUserById(1L);
-        User user = UserMapper.mapToUser(userDto);
-        Assertions.assertEquals("Mateusz", user.getFirstName());
-        Assertions.assertEquals("Nowak", user.getLastName());
-        Assertions.assertEquals("admin@admin.admin", user.getEmail());
-        Assertions.assertEquals("admin", user.getPassword());
+    @InjectMocks
+    private UserServiceImpl userService;
+
+    private User buildUser() {
+        return User.builder()
+                .firstName("Test")
+                .lastName("Testowy")
+                .email("test@test.test")
+                .password("12345").build();
     }
 
-    /**
-     * Test the {@link UserService#getUserById(Long)} method with an invalid user ID.
-     * This test ensures that when an invalid user ID (less than or equal to zero) is provided,
-     * an {@link InvalidInputException} is thrown.
-     */
-    @Test
-    public void testGetUserById_InvalidId() {
-        Assertions.assertThrows(
-                InvalidInputException.class,
-                () -> userService.getUserById(-1L)
-        );
+    private UserDto buildUserDto() {
+        return UserDto.builder()
+                .firstName("TestDto")
+                .lastName("TestowyDto")
+                .email("testDto@testDto.testDto")
+                .password("12345Dto").build();
     }
 
-    /**
-     * Test the {@link UserService#getUserById(Long)} method with a non-existent user ID.
-     * This test ensures that when a non-existent user ID is provided, an {@link EntityNotFoundException}
-     * is thrown. The ID used in this test (100L) is assumed to not exist in the database.
-     */
+    /// /////////////////////////////////
+    ///  TESTS OF getUserById()
+    /// /////////////////////////////////
     @Test
-    public void testGetUserById_NotFoundId() {
-        Assertions.assertThrows(
+    public void UserService_GetUserById_ReturnUserDto() {
+        User user = buildUser();
+        Long id = 1L;
+        user.setId(id);
+
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+
+        UserDto foundUserDto = userService.getUserById(id);
+
+        Assertions.assertNotNull(foundUserDto);
+        Assertions.assertEquals(user.getId(), foundUserDto.getId());
+    }
+
+    @Test
+    public void UserService_GetUserByNotExistingId_ReturnUserDto() {
+        Long id = 1L;
+        when(userRepository.findById(id)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception =
+                new EntityNotFoundException(User.class.getSimpleName(), id);
+
+        EntityNotFoundException testException = Assertions.assertThrows(
                 EntityNotFoundException.class,
-                () -> userService.getUserById(100L)
+                () -> userService.getUserById(id)
         );
+
+        Assertions.assertEquals(exception.getMessage(), testException.getMessage());
     }
 
-    /**
-     * Test the {@link UserService#getUserById(Long)} method with a null user ID.
-     * This test ensures that when a null user ID is provided, an {@link InvalidInputException} is thrown.
-     */
     @Test
-    public void testGetUserById_NullId() {
-        Assertions.assertThrows(
+    public void UserService_GetUserByInvalidId_ThrowException() {
+        Long id = -1L;
+
+        InvalidInputException exception =
+                new InvalidInputException(String.valueOf(id));
+
+        InvalidInputException testException = Assertions.assertThrows(
+                InvalidInputException.class,
+                () -> userService.getUserById(id)
+        );
+
+        Assertions.assertEquals(exception.getMessage(), testException.getMessage());
+    }
+
+    @Test
+    public void UserService_GetUserByNullId_ThrowException() {
+        InvalidInputException exception = new InvalidInputException("null");
+
+        InvalidInputException testException = Assertions.assertThrows(
                 InvalidInputException.class,
                 () -> userService.getUserById(null)
         );
+
+        Assertions.assertEquals(exception.getMessage(), testException.getMessage());
+    }
+
+    /// /////////////////////////////////
+    ///  TESTS OF createUser()
+    /// /////////////////////////////////
+
+    @Test
+    public void UserService_CreateUser_ReturnUserDto() {
+        User user = buildUser();
+        UserDto userDto = buildUserDto();
+
+        when(userRepository.save(Mockito.any(User.class))).thenReturn(user);
+
+        UserDto createdUserDto = userService.createUser(userDto);
+
+        Assertions.assertNotNull(createdUserDto);
+        Assertions.assertEquals(userDto.getId(), createdUserDto.getId());
+    }
+
+    /// /////////////////////////////////
+    ///  TESTS OF getAllUsers()
+    /// /////////////////////////////////
+
+    @Test
+    public void UserService_GetAllUsers_ReturnAllUserDtos() {
+        User user = buildUser();
+        User secondUser = User.builder()
+                .firstName("Test2")
+                .lastName("Testowy2")
+                .email("test2@test2.test2")
+                .password("1234522").build();
+        List<User> users = new ArrayList<>();
+        users.add(user);
+        users.add(secondUser);
+
+        when(userRepository.findAll()).thenReturn(users);
+
+        List<UserDto> userDtos = userService.getAllUsers();
+
+        Assertions.assertNotNull(userDtos);
+        Assertions.assertEquals(userDtos.size(), users.size());
+    }
+
+    @Test
+    public void UserService_GetAllUsers_ReturnEmptyList() {
+        when(userRepository.findAll()).thenReturn(new ArrayList<>());
+
+        List<UserDto> userDtos = userService.getAllUsers();
+
+        Assertions.assertNotNull(userDtos);
+        Assertions.assertEquals(0, userDtos.size());
+    }
+
+    /// /////////////////////////////////
+    ///  TESTS OF updateUser()
+    /// /////////////////////////////////
+
+    @Test
+    public void UserService_UpdateUser_ReturnUserDto() {
+        User user = buildUser();
+        Long id = 1L;
+        UserDto userDto = buildUserDto();
+
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        when(userRepository.save(Mockito.any(User.class))).thenReturn(user);
+
+        UserDto updatedUserDto = userService.updateUser(id, userDto);
+
+        Assertions.assertNotNull(updatedUserDto);
+        Assertions.assertEquals(user.getId(), updatedUserDto.getId());
+        Assertions.assertEquals(userDto.getFirstName(), updatedUserDto.getFirstName());
+    }
+
+    /// /////////////////////////////////
+    ///  TESTS OF deleteUser()
+    /// /////////////////////////////////
+
+    @Test
+    public void UserService_DeleteUser_NoReturn() {
+        User user = buildUser();
+        Long id = 1L;
+
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+
+        Assertions.assertAll(() -> userService.deleteUser(id));
     }
 }
