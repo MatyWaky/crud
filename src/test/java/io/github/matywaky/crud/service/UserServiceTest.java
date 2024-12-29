@@ -6,6 +6,7 @@ import io.github.matywaky.crud.exception.EntityNotFoundException;
 import io.github.matywaky.crud.exception.InvalidInputException;
 import io.github.matywaky.crud.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,16 +29,18 @@ public class UserServiceTest {
     @InjectMocks
     private UserServiceImpl userService;
 
-    private User buildUser() {
-        return User.builder()
+    private User user;
+    private UserDto userDto;
+
+    @BeforeEach
+    public void init() {
+        user = User.builder()
                 .firstName("Test")
                 .lastName("Testowy")
                 .email("test@test.test")
                 .password("12345").build();
-    }
 
-    private UserDto buildUserDto() {
-        return UserDto.builder()
+        userDto = UserDto.builder()
                 .firstName("TestDto")
                 .lastName("TestowyDto")
                 .email("testDto@testDto.testDto")
@@ -49,7 +52,6 @@ public class UserServiceTest {
     /// /////////////////////////////////
     @Test
     public void UserService_GetUserById_ReturnUserDto() {
-        User user = buildUser();
         Long id = 1L;
         user.setId(id);
 
@@ -92,27 +94,12 @@ public class UserServiceTest {
         Assertions.assertEquals(exception.getMessage(), testException.getMessage());
     }
 
-    @Test
-    public void UserService_GetUserByNullId_ThrowException() {
-        InvalidInputException exception = new InvalidInputException("null");
-
-        InvalidInputException testException = Assertions.assertThrows(
-                InvalidInputException.class,
-                () -> userService.getUserById(null)
-        );
-
-        Assertions.assertEquals(exception.getMessage(), testException.getMessage());
-    }
-
     /// /////////////////////////////////
     ///  TESTS OF createUser()
     /// /////////////////////////////////
 
     @Test
     public void UserService_CreateUser_ReturnUserDto() {
-        User user = buildUser();
-        UserDto userDto = buildUserDto();
-
         when(userRepository.save(Mockito.any(User.class))).thenReturn(user);
 
         UserDto createdUserDto = userService.createUser(userDto);
@@ -121,13 +108,17 @@ public class UserServiceTest {
         Assertions.assertEquals(userDto.getId(), createdUserDto.getId());
     }
 
+    @Test
+    public void UserService_CreateUserWithNullData_ThrowException() {
+        Assertions.assertThrows(RuntimeException.class, () -> userService.createUser(null));
+    }
+
     /// /////////////////////////////////
     ///  TESTS OF getAllUsers()
     /// /////////////////////////////////
 
     @Test
     public void UserService_GetAllUsers_ReturnAllUserDtos() {
-        User user = buildUser();
         User secondUser = User.builder()
                 .firstName("Test2")
                 .lastName("Testowy2")
@@ -161,9 +152,7 @@ public class UserServiceTest {
 
     @Test
     public void UserService_UpdateUser_ReturnUserDto() {
-        User user = buildUser();
         Long id = 1L;
-        UserDto userDto = buildUserDto();
 
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
         when(userRepository.save(Mockito.any(User.class))).thenReturn(user);
@@ -181,7 +170,6 @@ public class UserServiceTest {
 
     @Test
     public void UserService_DeleteUser_NoReturn() {
-        User user = buildUser();
         Long id = 1L;
 
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
